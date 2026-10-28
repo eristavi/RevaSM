@@ -4,7 +4,9 @@
 
 ## 1. Purpose
 
-RevaSM is a language-neutral semantic machine. It defines program meaning while allowing independent implementations to choose their own lowering IRs, optimization pipelines, native backends, runtime techniques, and OS integration strategies.
+RevaSM is a language-neutral semantic machine architecture. It defines a machine-level execution contract while allowing independent implementations to choose their own internal lowering IRs, optimization pipelines, runtime techniques, physical realizations, and OS integration strategies.
+
+RevaSM is a machine target in its own right. It occupies the same architectural target layer as x86-64, ARM64, and RISC-V; it is not defined as an IR whose meaning depends on lowering into one of them.
 
 The broader ecosystem may include RevaOS, but RevaSM itself remains OS-independent.
 
@@ -12,21 +14,61 @@ The broader ecosystem may include RevaOS, but RevaSM itself remains OS-independe
 
 RevaSM deliberately studies proven ideas from mature systems and architectures, adopts what survives scrutiny, improves or generalizes those ideas where useful, rejects unnecessary historical baggage, and adds original semantics where they strengthen the design.
 
-Adoption is principle-driven rather than feature-driven: an idea belongs in RevaSM only when it improves semantic clarity, verification, optimization, lowering, portability, or security without creating disproportionate complexity.
+Adoption is principle-driven rather than feature-driven: an idea belongs in RevaSM only when it improves semantic clarity, verification, optimization, portability, security, or implementability without creating disproportionate complexity.
 
-## 3. Architectural layers
+## 3. Architectural position
 
-1. **Source-language frontends** produce RevaSM semantic modules.
-2. **Semantic modules** declare Base requirements, extensions, imports/exports, signatures, effects, and environment requirements.
+A compiler or language implementation may choose RevaSM as its machine target just as it may choose x86-64, ARM64, or RISC-V.
+
+```text
+Source languages / compilers
+            |
+            v
+      Machine target
+            |
+   +--------+--------+--------+
+   |        |        |        |
+   v        v        v        v
+ RevaSM   x86-64   ARM64    RISC-V
+   |        |        |        |
+   +--------+--------+--------+
+            |
+            v
+      Physical system
+```
+
+RevaSM may eventually execute directly on native RevaSM hardware or another native realization. Until then, and even afterward, software implementations are permitted:
+
+```text
+RevaSM program
+      |
+      +---------------------------+
+      |                           |
+      v                           v
+native RevaSM execution      hosted RevaSM implementation
+                              interpreter / JIT / translator
+                                      |
+                                      v
+                              host ISA / physical CPU
+```
+
+A hosted implementation translating RevaSM to x86-64, ARM64, RISC-V, or another host ISA is an implementation technique. It does not make those ISAs architectural children of RevaSM and does not make RevaSM an intermediate representation beneath the compiler frontend.
+
+## 4. RevaSM execution model
+
+Within the RevaSM target itself:
+
+1. **Source-language frontends or compilers** emit RevaSM programs/modules.
+2. **RevaSM modules** declare Base requirements, extensions, imports/exports, signatures, effects, and environment requirements.
 3. **Verifier** checks static semantic obligations.
-4. **Reference interpreter** provides executable semantic behavior.
-5. **Implementation pipeline** lowers and optimizes semantics into a target ISA.
-6. **Environment adapter** maps external resources/services into a specific host OS, kernel, bare-metal environment, or RevaOS.
-7. **Physical execution** occurs on an ISA such as x86-64, ARM64, RISC-V, or future hardware.
+4. **Reference interpreter** provides executable reference behavior.
+5. **Native or hosted implementations** realize the RevaSM machine contract.
+6. **Environment adapters** map external resources and services into a host OS, kernel, bare-metal environment, RevaOS, or future environment.
+7. **Physical execution** occurs either on a native RevaSM realization or through a hosted implementation on another physical ISA.
 
-Hardware backend and execution environment are separate portability axes.
+Machine architecture and execution environment are separate portability axes.
 
-## 4. Current semantic commitments
+## 5. Current semantic commitments
 
 Working decisions currently include:
 
@@ -42,18 +84,18 @@ Working decisions currently include:
 - synchronous traps in the initial sequential subset are terminal and do not roll back earlier effects.
 - Base and extensions evolve independently; existing semantics are not silently redefined.
 
-## 5. Implementation freedom
+## 6. Implementation freedom
 
-The semantic machine does not require fat native pointers, runtime lookup on every access, one specific garbage collector, one optimizer, one object format, or one OS ABI. Implementations may preserve semantics through static proof, runtime checks, indirection, metadata, hardware capabilities, OS assistance, or combinations of these.
+The RevaSM architecture does not require fat native pointers, runtime lookup on every access, one specific garbage collector, one optimizer, one object format, one physical realization, or one OS ABI. Implementations may preserve semantics through static proof, runtime checks, indirection, metadata, hardware capabilities, OS assistance, JIT translation, interpretation, native execution, or combinations of these.
 
-## 6. Portability boundary
+## 7. Portability boundary
 
 Base contains no Linux, Windows, POSIX, Win32, filesystem, process, or device API. External services are supplied through typed execution-environment contracts.
 
-A Linux port may map a resource to a file descriptor; Windows may use a HANDLE; RevaOS may use a native capability. These physical representations do not alter the semantic contract.
+A Linux environment may map a resource to a file descriptor; Windows may use a HANDLE; RevaOS may use a native capability. These environment-specific representations do not alter the RevaSM machine contract.
 
-## 7. Base policy
+## 8. Base policy
 
-The current Base inventory is intentionally small (roughly the mid-30s in concrete semantic operations depending on how multi-result forms are counted), but no target count is sacred. A primitive remains in Base only when removing it would materially harm clarity, verification, optimization, lowering, or portability.
+The current Base inventory is intentionally small (roughly the mid-30s in concrete semantic operations depending on how multi-result forms are counted), but no target count is sacred. A primitive remains in Base only when removing it would materially harm clarity, verification, optimization, implementation, or portability.
 
 Base is not frozen.
