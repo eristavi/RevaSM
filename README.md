@@ -1,6 +1,6 @@
 # RevaSM
 
-**RevaSM** is an experimental **Universal Semantic Machine**: a compact, language-neutral semantic target designed to preserve program meaning, authority, effects, and memory-object semantics while remaining portable across hardware and operating systems.
+**RevaSM** is an experimental **Universal Semantic Machine architecture**: a compact, language-neutral machine target designed to preserve program meaning, authority, effects, and memory-object semantics while remaining independent of any particular operating system or physical implementation.
 
 > **Status:** pre-Base-freeze research prototype. The current operation inventory and several memory rules are deliberately provisional.
 
@@ -8,7 +8,7 @@
 
 RevaSM is being designed around a few principles:
 
-- a small semantic Base rather than a large hardware-style instruction catalogue;
+- a small semantic Base rather than a large historically accumulated instruction catalogue;
 - immutable SSA values with explicit block parameters;
 - defined behavior and explicit failure instead of semantic "anything can happen" cases;
 - capability-aware addresses with bounds, permissions, provenance, and object identity;
@@ -16,38 +16,57 @@ RevaSM is being designed around a few principles:
 - explicit effects and no hidden arithmetic flag state;
 - verifier-assisted execution: prove properties statically where possible, enforce dynamically where necessary;
 - independently versioned extensions rather than continuously expanding Base;
-- separate hardware backends and execution-environment/OS adapters;
+- OS-independent machine semantics with explicit execution-environment contracts;
 - no privileged source language and no dependency on one operating system or ISA.
 
 RevaSM is independent of Eristavi. Eristavi may target RevaSM, but receives no privileged semantics.
 
-## Architecture
+## Architectural position
+
+RevaSM is a **machine architecture target in its own right**, at the same architectural level as x86-64, ARM64, and RISC-V. It is not defined as an intermediate representation that must lower into one of those ISAs.
 
 ```text
-Source languages
-      |
-      v
-Frontends / producers
-      |
-      v
-RevaSM semantic module
-      |
-      v
-Verifier / semantic validation
-      |
-      +---------------------------+
-      |                           |
-      v                           v
-Implementation pipeline      Environment contract
-(lower/optimize/backend)     (services/authority/resources)
-      |                           |
-      v                           v
-x86-64 / ARM64 / RISC-V      Linux / Windows / BSD / bare metal / RevaOS
-      \___________________________/
-                  |
-                  v
-            Physical system
+Source languages / compilers
+            |
+            v
+      Machine target
+            |
+   +--------+--------+--------+
+   |        |        |        |
+   v        v        v        v
+ RevaSM   x86-64   ARM64    RISC-V
+   |        |        |        |
+   +--------+--------+--------+
+            |
+            v
+      Physical system
 ```
+
+A RevaSM implementation may be realized in several ways:
+
+```text
+RevaSM program
+      |
+      +--------------------------+
+      |                          |
+      v                          v
+native RevaSM execution     hosted implementation
+(hardware or future         (interpreter / JIT /
+native implementation)      translator)
+                                 |
+                                 v
+                         host ISA such as
+                      x86-64 / ARM64 / RISC-V
+                                 |
+      +--------------------------+
+      |
+      v
+physical execution
+```
+
+Using x86-64, ARM64, or RISC-V underneath a hosted RevaSM implementation is therefore an implementation strategy, not RevaSM's architectural position.
+
+Execution environments are a separate axis. Linux, Windows, BSD, bare metal, RevaOS, or future systems provide services through environment contracts/adapters without redefining RevaSM semantics.
 
 ## Current executable slice
 
